@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResumeMuse - Turn any job description into a resume that gets you hired</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0A0A14">
+
+<meta name="description" content="Paste a job description and ResumeMuse reads the posting, scores your resume against real ATS filters, and rewrites it to match. Recruiter-grade bullets from your own facts, never invented. Free to start.">
+<meta property="og:title" content="ResumeMuse - a resume that gets you hired">
+<meta property="og:description" content="Paste the role you want. ResumeMuse tailors your resume to beat the bots and reach a human. Your words, your data, zero invented facts.">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070C;
+  --bg-2:#0C0C16;
+  --surface:#12121D;
+  --surface-2:#171725;
+  --line:rgba(255,255,255,.08);
+  --line-2:rgba(255,255,255,.14);
+  --text:#ECECF3;
+  --text-2:#A6A6BC;
+  --text-3:#6E6E85;
+  --violet:#7C5CFF;
+  --violet-2:#9B7BFF;
+  --fuchsia:#D65CFF;
+  --pink:#FF5C9E;
+  --mint:#34D399;
+  --mint-2:#10B981;
+  --amber:#FBBF24;
+  --grad:linear-gradient(120deg,#7C5CFF 0%,#B15CFF 45%,#E056C6 100%);
+  --grad-soft:linear-gradient(120deg,#7C5CFF,#D65CFF);
+  --r-sm:12px;--r-md:18px;--r-lg:26px;--r-xl:34px;--r-full:999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden;width:100%}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative;width:100%;max-width:100%;
+}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:1.05;letter-spacing:-.02em}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+::selection{background:rgba(124,92,255,.35);color:#fff}
+
+.wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 26px}
+@media(max-width:600px){.wrap{padding:0 20px}}
+.sec{padding:110px 0;position:relative}
+@media(max-width:768px){.sec{padding:74px 0}}
+
+/* gradient + effects */
+.gtext{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+  background-size:200% 200%;animation:gmove 6s ease infinite}
+@keyframes gmove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--violet-2);
+  padding:8px 16px;border-radius:var(--r-full);border:1px solid var(--line-2);
+  background:rgba(124,92,255,.08);margin-bottom:22px;font-family:'Inter',sans-serif}
+.eyebrow .d{width:6px;height:6px;border-radius:50%;background:var(--fuchsia);
+  box-shadow:0 0 10px var(--fuchsia);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sec-h{font-size:clamp(30px,5vw,52px);margin-bottom:18px}
+.sec-sub{font-size:clamp(16px,2vw,19px);color:var(--text-2);max-width:56ch;line-height:1.6}
+.center{text-align:center}
+.center .sec-sub{margin-left:auto;margin-right:auto}
+
+/* aurora background */
+.aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;width:100vw;max-width:100%}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;will-change:transform}
+.blob.b1{width:620px;height:620px;background:radial-gradient(circle,#5B3CFF,transparent 65%);top:-220px;right:-140px;animation:drift1 22s ease-in-out infinite}
+.blob.b2{width:540px;height:540px;background:radial-gradient(circle,#D65CFF,transparent 65%);top:24%;left:-200px;opacity:.32;animation:drift2 26s ease-in-out infinite}
+.blob.b3{width:500px;height:500px;background:radial-gradient(circle,#3CE0C0,transparent 68%);bottom:-160px;right:8%;opacity:.16;animation:drift3 30s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,60px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(70px,-50px)}}
+@keyframes drift3{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,-40px)}}
+.grid-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 55% at 50% 0%,#000 10%,transparent 70%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0%,#000 10%,transparent 70%)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}
+.d4{transition-delay:.32s}.d5{transition-delay:.4s}.d6{transition-delay:.48s}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{animation:none!important}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-weight:600;font-size:15.5px;padding:15px 28px;border-radius:var(--r-full);
+  transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s,background .2s,border-color .2s;
+  white-space:nowrap;letter-spacing:-.01em}
+.btn .arw{transition:transform .2s}
+.btn:hover .arw{transform:translateX(4px)}
+.btn-grad{background:var(--grad);color:#fff;background-size:150% 150%;
+  box-shadow:0 8px 30px rgba(124,92,255,.4),inset 0 1px 0 rgba(255,255,255,.2)}
+.btn-grad:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(124,92,255,.55);background-position:100% 50%}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line-2)}
+.btn-ghost:hover{background:rgba(255,255,255,.09);transform:translateY(-2px);border-color:rgba(255,255,255,.3)}
+.btn-lg{padding:18px 34px;font-size:16.5px}
+.btn-sm{padding:11px 20px;font-size:14px}
+.btn-block{width:100%}
+
+/* ===== NAV ===== */
+header.nav{position:fixed;top:0;left:0;right:0;z-index:200;transition:background .3s,border-color .3s,backdrop-filter .3s;
+  border-bottom:1px solid transparent}
+header.nav.scrolled{background:rgba(7,7,12,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom-color:var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:15px 26px}
+@media(max-width:600px){.nav-in{padding:13px 20px}}
+.logo{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk';font-weight:700;font-size:21px;letter-spacing:-.03em}
+.logo .lm{width:38px;height:38px;border-radius:11px;background:var(--grad);display:grid;place-items:center;
+  box-shadow:0 6px 20px rgba(124,92,255,.45);flex:none}
+.logo .lm svg{width:20px;height:20px}
+.logo b{font-weight:700}.logo .mu{color:var(--violet-2)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{font-size:14.5px;font-weight:500;color:var(--text-2);transition:color .18s}
+.nav-links a:hover{color:var(--text)}
+.nav-r{display:flex;align-items:center;gap:12px}
+.burger{display:none;width:42px;height:42px;border-radius:11px;border:1px solid var(--line-2);
+  background:rgba(255,255,255,.04);align-items:center;justify-content:center;flex:none}
+.burger span,.burger span::before,.burger span::after{content:"";display:block;width:17px;height:2px;background:var(--text);border-radius:2px;position:relative;transition:transform .25s,opacity .25s}
+.burger span::before{position:absolute;top:-6px}.burger span::after{position:absolute;top:6px}
+#navtog{display:none}
+#navtog:checked~.nav-in .burger span{background:transparent}
+#navtog:checked~.nav-in .burger span::before{transform:translateY(6px) rotate(45deg)}
+#navtog:checked~.nav-in .burger span::after{transform:translateY(-6px) rotate(-45deg)}
+.drop{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(10,10,18,.97);
+  backdrop-filter:blur(18px);border-bottom:1px solid var(--line);padding:10px 20px 22px;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+#navtog:checked~.drop{display:block}
+.drop a{display:block;padding:14px 6px;font-size:16px;font-weight:500;color:var(--text-2);border-top:1px solid var(--line)}
+.drop .btn{margin-top:14px}
+@media(max-width:860px){.nav-links{display:none}.nav-r .btn-ghost{display:none}.burger{display:flex}}
+@media(max-width:560px){.nav-r .btn-grad{display:none}}
+
+/* ===== HERO ===== */
+.hero{padding:150px 0 60px;text-align:center;position:relative}
+@media(max-width:768px){.hero{padding:120px 0 40px}}
+.hero-badge{display:inline-flex;align-items:center;gap:10px;padding:8px 10px 8px 8px;border-radius:var(--r-full);
+  border:1px solid var(--line-2);background:rgba(255,255,255,.03);font-size:13.5px;color:var(--text-2);margin-bottom:30px}
+.hero-badge .tag{background:var(--grad);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;
+  padding:4px 11px;border-radius:var(--r-full);text-transform:uppercase}
+.hero-badge .arw{color:var(--text-3)}
+.hero h1{font-size:clamp(40px,8vw,82px);letter-spacing:-.04em;line-height:1;max-width:16ch;margin:0 auto 26px}
+.hero-sub{font-size:clamp(17px,2.2vw,21px);color:var(--text-2);max-width:52ch;margin:0 auto 38px;line-height:1.55}
+.hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+.hero-micro{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;font-size:13.5px;color:var(--text-3)}
+.hero-micro span{display:flex;align-items:center;gap:7px}
+.hero-micro svg{color:var(--mint);flex:none}
+
+/* hero app preview */
+.preview{max-width:940px;margin:64px auto 0;position:relative;perspective:1600px}
+.preview-glow{position:absolute;inset:-2px;background:var(--grad);border-radius:var(--r-xl);filter:blur(34px);opacity:.32;z-index:-1}
+.browser{background:linear-gradient(180deg,rgba(23,23,37,.96),rgba(14,14,24,.98));border:1px solid var(--line-2);
+  border-radius:var(--r-xl);overflow:hidden;box-shadow:0 50px 120px rgba(0,0,0,.6);
+  transform:rotateX(6deg);transition:transform .6s cubic-bezier(.16,1,.3,1)}
+.preview:hover .browser{transform:rotateX(0deg)}
+@media(max-width:768px){.browser{transform:none}}
+.br-bar{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.br-dot{width:11px;height:11px;border-radius:50%}
+.br-dot.r{background:#FF5F57}.br-dot.y{background:#FEBC2E}.br-dot.g{background:#28C840}
+.br-url{margin-left:14px;flex:1;max-width:340px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:var(--r-full);padding:6px 16px;font-size:12.5px;color:var(--text-3);display:flex;align-items:center;gap:8px}
+.br-url svg{color:var(--mint);flex:none}
+.br-body{padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:720px){.br-body{grid-template-columns:1fr;padding:18px}}
+.pv-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--r-md);padding:20px;text-align:left}
+.pv-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pv-label .l{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.pv-label .l svg{color:var(--violet-2)}
+.pv-pill{font-size:10.5px;font-weight:700;color:var(--violet-2);background:rgba(124,92,255,.14);padding:4px 10px;border-radius:var(--r-full)}
+.pv-jd-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;font-family:'Space Grotesk'}
+.pv-jd-body{font-size:12.5px;color:var(--text-3);line-height:1.6;margin-bottom:14px}
+.pv-chips{display:flex;flex-wrap:wrap;gap:7px}
+.pv-chip{font-size:11.5px;color:var(--text-2);background:rgba(124,92,255,.1);border:1px solid rgba(124,92,255,.2);
+  padding:5px 11px;border-radius:8px;opacity:0;transform:scale(.8);transition:all .4s cubic-bezier(.34,1.56,.64,1)}
+.pv-chip.on{opacity:1;transform:scale(1)}
+/* score ring */
+.pv-score-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.ring-wrap{position:relative;width:96px;height:96px;flex:none}
+.ring-wrap svg{transform:rotate(-90deg);width:96px;height:96px}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
+.ring-fg{fill:none;stroke:url(#ringgrad);stroke-width:8;stroke-linecap:round;
+  stroke-dasharray:339.29;stroke-dashoffset:339.29;transition:stroke-dashoffset 1.8s cubic-bezier(.16,1,.3,1)}
+.ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num b{font-family:'Space Grotesk';font-size:26px;font-weight:700;line-height:1}
+.ring-num small{font-size:8.5px;letter-spacing:.1em;color:var(--text-3);text-transform:uppercase;margin-top:2px}
+.pv-name{font-family:'Space Grotesk';font-size:18px;font-weight:700;margin-bottom:2px}
+.pv-role{font-size:13px;color:var(--violet-2);font-weight:600;margin-bottom:14px}
+.pv-bullets{list-style:none;display:flex;flex-direction:column;gap:11px}
+.pv-bullets li{font-size:12.5px;color:var(--text-2);line-height:1.5;padding-left:16px;position:relative;opacity:0;transform:translateX(-8px);transition:all .5s cubic-bezier(.16,1,.3,1)}
+.pv-bullets li.on{opacity:1;transform:none}
+.pv-bullets li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--violet)}
+.pv-bullets li em{font-style:normal;color:var(--mint);font-weight:600}
+
+/* ===== STAT BAND ===== */
+.stats{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(255,255,255,.015)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+@media(max-width:760px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat{padding:44px 26px;text-align:center;border-right:1px solid var(--line)}
+.stat:last-child{border-right:none}
+@media(max-width:760px){.stat{border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.stat:nth-child(2n){border-right:none}.stat:nth-last-child(-n+2){border-bottom:none}}
+.stat b{display:block;font-family:'Space Grotesk';font-size:clamp(30px,4vw,44px);font-weight:700;letter-spacing:-.03em;margin-bottom:8px}
+.stat span{font-size:13.5px;color:var(--text-3);line-height:1.4}
+
+/* ===== FIELDS MARQUEE ===== */
+.fields{padding:52px 0;overflow:hidden}
+.fields-label{text-align:center;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:26px}
+.marquee{display:flex;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.mq-track{display:flex;gap:14px;animation:mq 32s linear infinite;flex:none;padding-right:14px}
+@keyframes mq{to{transform:translateX(-50%)}}
+.mq-item{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+  border-radius:var(--r-full);padding:11px 20px;font-size:14.5px;font-weight:500;color:var(--text-2);white-space:nowrap}
+.mq-item .dot{width:6px;height:6px;border-radius:50%;background:var(--violet)}
+
+/* ===== FEATURES ===== */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
+@media(max-width:900px){.feat-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.feat-grid{grid-template-columns:1fr}}
+.feat{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:30px 28px;overflow:hidden;transition:transform .3s cubic-bezier(.16,1,.3,1),border-color .3s}
+.feat::before{content:"";position:absolute;inset:0;border-radius:var(--r-lg);padding:1px;
+  background:var(--grad);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .3s}
+.feat:hover{transform:translateY(-6px)}
+.feat:hover::before{opacity:1}
+.feat-ico{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;margin-bottom:20px;
+  background:linear-gradient(140deg,rgba(124,92,255,.22),rgba(214,92,255,.12));border:1px solid rgba(124,92,255,.28);
+  transition:transform .3s}
+.feat:hover .feat-ico{transform:scale(1.08) rotate(-4deg)}
+.feat-ico svg{width:25px;height:25px;color:var(--violet-2)}
+.feat.mint .feat-ico{background:linear-gradient(140deg,rgba(52,211,153,.2),rgba(16,185,129,.1));border-color:rgba(52,211,153,.3)}
+.feat.mint .feat-ico svg{color:var(--mint)}
+.feat h3{font-size:19px;margin-bottom:9px}
+.feat p{font-size:14.5px;color:var(--text-2);line-height:1.62}
+.feat .fbadge{position:absolute;top:20px;right:20px;font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--mint);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);
+  padding:4px 9px;border-radius:var(--r-full)}
+
+/* ===== BEAT THE BOTS ===== */
+.bots{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+@media(max-width:880px){.bots{grid-template-columns:1fr;gap:38px}}
+.bots-list{list-style:none;margin-top:26px;display:flex;flex-direction:column;gap:14px}
+.bots-list li{display:flex;align-items:flex-start;gap:13px;font-size:16px;color:var(--text-2);line-height:1.5}
+.bots-list li .ck{width:24px;height:24px;border-radius:8px;flex:none;display:grid;place-items:center;
+  background:rgba(124,92,255,.16);border:1px solid rgba(124,92,255,.3);margin-top:1px}
+.bots-list li .ck svg{width:13px;height:13px;color:var(--violet-2)}
+.scan{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:28px;position:relative;overflow:hidden}
+.scan::before{content:"";position:absolute;inset:0;background:radial-gradient(400px 200px at 80% 0%,rgba(52,211,153,.1),transparent 60%)}
+.scan>*{position:relative;z-index:1}
+.scan-top{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.scan-shield{width:52px;height:52px;border-radius:15px;background:linear-gradient(140deg,rgba(52,211,153,.24),rgba(16,185,129,.12));
+  border:1px solid rgba(52,211,153,.34);display:grid;place-items:center;flex:none}
+.scan-shield svg{width:26px;height:26px;color:var(--mint)}
+.scan-top .t{flex:1}
+.scan-top .t b{font-family:'Space Grotesk';font-size:19px;display:block}
+.scan-top .t span{font-size:12.5px;color:var(--text-3)}
+.scan-pct{font-family:'Space Grotesk';font-size:18px;font-weight:700;color:var(--mint);background:rgba(52,211,153,.12);
+  border:1px solid rgba(52,211,153,.3);padding:7px 15px;border-radius:var(--r-full)}
+.scan-list{list-style:none;display:flex;flex-direction:column;gap:2px}
+.scan-list li{display:flex;align-items:center;gap:13px;font-size:14.5px;color:var(--text-2);padding:11px 0;border-bottom:1px solid var(--line)}
+.scan-list li:last-child{border-bottom:none}
+.scan-list li .sc{width:22px;height:22px;border-radius:50%;background:rgba(52,211,153,.14);display:grid;place-items:center;flex:none}
+.scan-list li .sc svg{width:12px;height:12px;color:var(--mint)}
+
+/* ===== BEFORE/AFTER ===== */
+.ba{max-width:760px;margin:56px auto 0}
+.ba-card{border-radius:var(--r-lg);padding:26px 28px;border:1px solid var(--line)}
+.ba-before{background:var(--surface);color:var(--text-3)}
+.ba-after{background:linear-gradient(140deg,rgba(124,92,255,.12),rgba(214,92,255,.06));border-color:rgba(124,92,255,.28)}
+.ba-tag{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ba-before .ba-tag{color:var(--text-3)}
+.ba-after .ba-tag{color:var(--violet-2)}
+.ba-after .ba-tag svg{width:14px;height:14px}
+.ba-card p{font-size:17px;line-height:1.55}
+.ba-before p{color:var(--text-3)}
+.ba-after p{color:var(--text)}
+.ba-after p em{font-style:normal;color:var(--mint);font-weight:600}
+.ba-arrow{width:52px;height:52px;border-radius:50%;background:var(--grad);display:grid;place-items:center;margin:16px auto;
+  box-shadow:0 10px 30px rgba(124,92,255,.5)}
+.ba-arrow svg{width:22px;height:22px;color:#fff}
+.ba-note{display:flex;align-items:flex-start;gap:10px;margin-top:22px;padding:16px 20px;border-radius:var(--r-md);
+  background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2);font-size:14px;color:var(--text-2);line-height:1.55}
+.ba-note svg{width:18px;height:18px;color:var(--mint);flex:none;margin-top:1px}
+.ba-note b{color:var(--text);font-weight:600}
+
+/* ===== MATCH CARDS ===== */
+.match{max-width:620px;margin:48px auto 0;display:flex;flex-direction:column;gap:14px}
+.match-card{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:20px 22px;transition:transform .25s,border-color .25s}
+.match-card:hover{transform:translateX(6px);border-color:var(--line-2)}
+.match-ico{width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  display:grid;place-items:center;flex:none}
+.match-ico svg{width:22px;height:22px;color:var(--text-2)}
+.match-info{flex:1;min-width:0}
+.match-info b{font-family:'Space Grotesk';font-size:16.5px;display:block}
+.match-info span{font-size:13.5px;color:var(--text-3)}
+.match-pct{font-family:'Space Grotesk';font-weight:700;font-size:15px;color:var(--mint);
+  background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.26);padding:8px 15px;border-radius:var(--r-full);white-space:nowrap}
+.match-hint{text-align:center;font-size:12.5px;color:var(--text-3);margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px}
+.match-hint .tagx{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);
+  border:1px solid var(--line-2);padding:3px 9px;border-radius:var(--r-full)}
+
+/* ===== TESTIMONIALS ===== */
+.tst-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:52px}
+@media(max-width:900px){.tst-grid{grid-template-columns:1fr}.tst-grid .tst:nth-child(n+2){display:none}}
+@media(min-width:901px){.tst-grid{grid-template-columns:repeat(3,1fr)}}
+.tst{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;display:flex;flex-direction:column}
+.tst-stars{display:flex;gap:3px;margin-bottom:16px}
+.tst-stars svg{width:16px;height:16px;color:var(--amber)}
+.tst-q{font-size:15.5px;color:var(--text);line-height:1.6;margin-bottom:auto;padding-bottom:22px}
+.tst-who{display:flex;align-items:center;gap:12px;padding-top:18px;border-top:1px solid var(--line)}
+.tst-av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;font-size:14px;color:#fff;flex:none}
+.tst-who b{font-size:14.5px;display:block;font-family:'Space Grotesk'}
+.tst-who span{font-size:12.5px;color:var(--text-3)}
+
+/* ===== FAQ ===== */
+.faq{max-width:760px;margin:52px auto 0;display:flex;flex-direction:column;gap:12px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;transition:border-color .2s}
+.faq details[open]{border-color:var(--line-2)}
+.faq summary{padding:22px 24px;font-family:'Space Grotesk';font-weight:600;font-size:16.5px;cursor:pointer;list-style:none;
+  display:flex;justify-content:space-between;align-items:center;gap:16px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";width:11px;height:11px;border-right:2px solid var(--violet-2);border-bottom:2px solid var(--violet-2);
+  transform:rotate(45deg);transition:transform .25s;flex:none;margin-top:-4px}
+.faq details[open] summary::after{transform:rotate(-135deg);margin-top:2px}
+.faq .fa{padding:0 24px 22px;font-size:15px;color:var(--text-2);line-height:1.68}
+
+/* ===== FINAL CTA ===== */
+.final{text-align:center;position:relative}
+.final-card{position:relative;border-radius:var(--r-xl);padding:70px 40px;overflow:hidden;
+  background:linear-gradient(140deg,rgba(124,92,255,.16),rgba(214,92,255,.08));border:1px solid var(--line-2)}
+@media(max-width:600px){.final-card{padding:50px 26px}}
+.final-card::before{content:"";position:absolute;inset:0;background:radial-gradient(500px 300px at 50% 0%,rgba(124,92,255,.25),transparent 65%)}
+.final-card>*{position:relative;z-index:1}
+.final h2{font-size:clamp(30px,5vw,52px);margin-bottom:18px}
+.final p{font-size:18px;color:var(--text-2);max-width:44ch;margin:0 auto 34px}
+
+/* ===== FOOTER ===== */
+footer{border-top:1px solid var(--line);padding:56px 0 34px;margin-top:20px}
+.ft-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:40px}
+.ft-brand{max-width:300px}
+.ft-brand .logo{margin-bottom:14px}
+.ft-brand p{font-size:14px;color:var(--text-3);line-height:1.6}
+.ft-cols{display:flex;gap:64px;flex-wrap:wrap}
+.ft-col h4{font-family:'Inter';font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:16px}
+.ft-col a{display:block;font-size:14px;color:var(--text-2);padding:6px 0;transition:color .18s}
+.ft-col a:hover{color:var(--text)}
+.ft-bot{border-top:1px solid var(--line);padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text-3)}
+.ft-bot a{color:var(--text-3)}
+.ft-note{font-size:12px;color:var(--text-3);line-height:1.6;margin-top:16px;max-width:80ch}
+</style>
+</head>
+<body>
+
+<div class="aurora"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <input type="checkbox" id="navtog">
+  <div class="nav-in">
+    <a href="/" class="logo">
+      <span class="lm"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 6.2L21 10l-5 4 1.4 7L12 17.5 6.6 21 8 14l-5-4 6.6-1.8z" fill="#fff"/></svg></span>
+      <span><b>Resume</b><span class="mu">Muse</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#bots">Beat the bots</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-r">
+      <a href="/app.html" class="btn btn-grad btn-sm">Build my resume <span class="arw">&rarr;</span></a>
+      <label for="navtog" class="burger" aria-label="Menu"><span></span></label>
+    </div>
+  </div>
+  <div class="drop">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#bots">Beat the bots</a>
+    <a href="#faq">FAQ</a>
+    <a href="/app.html" class="btn btn-grad btn-block">Build my resume</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-badge rv in"><span class="tag">New</span> Built for 2026 ATS <span class="arw">&rarr;</span></div>
+    <h1 class="rv in d1">Turn any job description into a resume that <span class="gtext">gets you hired</span></h1>
+    <p class="hero-sub rv in d2">Paste the role you want. ResumeMuse reads the posting, scores your resume against real ATS filters, and rewrites it to match. All from your own facts, never invented.</p>
+    <div class="hero-cta rv in d3">
+      <a href="/app.html" class="btn btn-grad btn-lg">Build my resume, free <span class="arw">&rarr;</span></a>
+      <a href="#how" class="btn btn-ghost btn-lg">See how it works</a>
+    </div>
+    <div class="hero-micro rv in d4">
+      <span><svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Free to start</span>
+      <span><svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Bring your own key</span>
+      <span><svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Nothing stored, ever</span>
+    </div>
+
+    <!-- APP PREVIEW -->
+    <div class="preview rv in d3">
+      <div class="preview-glow"></div>
+      <div class="browser" id="browser">
+        <div class="br-bar">
+          <span class="br-dot r"></span><span class="br-dot y"></span><span class="br-dot g"></span>
+          <span class="br-url"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" stroke-width="2"/></svg>resume.clearpath.click</span>
+        </div>
+        <div class="br-body">
+          <div class="pv-card">
+            <div class="pv-label"><span class="l"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Job description</span><span class="pv-pill">Pasted</span></div>
+            <div class="pv-jd-title">Senior Product Designer</div>
+            <div class="pv-jd-body">Own end-to-end product design. Craft user flows, build design systems, and partner closely with engineering to ship...</div>
+            <div class="pv-chips" id="chips">
+              <span class="pv-chip">Figma</span><span class="pv-chip">Design systems</span><span class="pv-chip">Prototyping</span><span class="pv-chip">User research</span>
+            </div>
+          </div>
+          <div class="pv-card">
+            <div class="pv-score-top">
+              <div>
+                <div class="pv-name">Jordan Blake</div>
+                <div class="pv-role">Senior Product Designer</div>
+              </div>
+              <div class="ring-wrap">
+                <svg viewBox="0 0 120 120"><defs><linearGradient id="ringgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7C5CFF"/><stop offset="100%" stop-color="#D65CFF"/></linearGradient></defs>
+                  <circle class="ring-bg" cx="60" cy="60" r="54"/>
+                  <circle class="ring-fg" id="ring" cx="60" cy="60" r="54"/>
+                </svg>
+                <div class="ring-num"><b id="ringnum">0</b><small>ATS Score</small></div>
+              </div>
+            </div>
+            <ul class="pv-bullets" id="pvbul">
+              <li>Led end-to-end design for a platform used by <em>a large B2B user base</em></li>
+              <li>Built a <em>design system</em> adopted across multiple product squads</li>
+              <li>Ran user research sessions that shipped features to market</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STAT BAND (honest product facts) -->
+<section class="stats">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat rv"><b class="gtext">3-in-1</b><span>Resume, cover letter and interview prep from one posting</span></div>
+      <div class="stat rv d1"><b class="gtext">Zero</b><span>Invented numbers, titles or employers. Ever.</span></div>
+      <div class="stat rv d2"><b class="gtext">90%+</b><span>ATS match score you can build toward and see live</span></div>
+      <div class="stat rv d3"><b class="gtext">~5 min</b><span>From pasting a job post to a polished, exportable resume</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FIELDS -->
+<div class="fields">
+  <div class="fields-label rv">Built for every field, at every level</div>
+  <div class="marquee"><div class="mq-track" id="mqtrack"></div></div>
+</div>
+
+<!-- FEATURES -->
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow rv"><span class="d"></span>Features</div>
+      <h2 class="sec-h rv d1">Everything you need to <span class="gtext">beat the bots</span></h2>
+      <p class="sec-sub rv d2">ResumeMuse handles the tedious parts of tailoring your resume, so you can focus on the story only you can tell.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat rv d1">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M16 16l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Job-match engine</h3>
+        <p>Paste any posting and ResumeMuse maps its requirements, seniority signals, and skills straight to your experience.</p>
+      </div>
+      <div class="feat rv d2">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 109 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>ATS score & insights</h3>
+        <p>See a live match score and exactly what would push it higher, line by line, before you ever export.</p>
+      </div>
+      <div class="feat rv d3">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20h16M6 16l4-9 4 6 4-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>AI bullet rewriter</h3>
+        <p>Turns plain job duties into sharp, achievement-led bullets that speak recruiter, using only the facts you actually give it.</p>
+      </div>
+      <div class="feat mint rv d1">
+        <span class="fbadge">New</span>
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+        <h3>Refine with AI</h3>
+        <p>One tap re-sharpens any section to the strongest version your facts honestly support. If a real number would help, it asks rather than inventing one.</p>
+      </div>
+      <div class="feat mint rv d2">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Honesty engine</h3>
+        <p>Never invents a number, title, employer or date. Your resume stays true to your real experience, which is the version that survives an interview.</p>
+      </div>
+      <div class="feat rv d3">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 9h16M9 9v11" stroke="currentColor" stroke-width="2"/></svg></div>
+        <h3>ATS-safe templates & export</h3>
+        <p>Single-column, parsing-proof layouts, exported as clean PDF and Word files that survive every applicant tracking system.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BEAT THE BOTS -->
+<section class="sec" id="bots">
+  <div class="wrap bots">
+    <div>
+      <div class="eyebrow rv"><span class="d"></span>Beat the bots</div>
+      <h2 class="sec-h rv d1">Most resumes get filtered before a human sees them. <span class="gtext">Yours won't.</span></h2>
+      <p class="sec-sub rv d2">Applicant tracking systems reject a lot of resumes on formatting alone. ResumeMuse structures and words yours so it parses cleanly and keeps your real experience front and center.</p>
+      <ul class="bots-list rv d3">
+        <li><span class="ck"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Clean, single-column layouts that parsers read flawlessly</li>
+        <li><span class="ck"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Standard headings the recruiter tools expect to see</li>
+        <li><span class="ck"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Machine-readable text, with no images, tables or fancy fonts to trip it up</li>
+      </ul>
+    </div>
+    <div class="scan rv d2">
+      <div class="scan-top">
+        <span class="scan-shield"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <div class="t"><b>ATS scan passed</b><span>Parsed cleanly, structure intact</span></div>
+        <span class="scan-pct">100%</span>
+      </div>
+      <ul class="scan-list">
+        <li><span class="sc"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Columns, headings and dates parsed correctly</li>
+        <li><span class="sc"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Keywords matched to the job post</li>
+        <li><span class="sc"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Contact info and links extracted</li>
+        <li><span class="sc"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Zero formatting flags detected</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE/AFTER -->
+<section class="sec">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow rv"><span class="d"></span>Quantify your impact</div>
+      <h2 class="sec-h rv d1">Turn job duties into <span class="gtext">proof you're the hire</span></h2>
+      <p class="sec-sub rv d2">Recruiters don't hire responsibilities, they hire results. ResumeMuse rewrites every bullet into a sharper, achievement-led version, keeping your voice and your facts.</p>
+    </div>
+    <div class="ba">
+      <div class="ba-card ba-before rv">
+        <div class="ba-tag">Before</div>
+        <p>"Responsible for managing the company's social media accounts."</p>
+      </div>
+      <div class="ba-arrow rv d1"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16m0 0l6-6m-6 6l-6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="ba-card ba-after rv d1">
+        <div class="ba-tag"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>After</div>
+        <p>"Grew organic reach and engagement across <em>four channels</em> by producing a consistent content calendar and reworking the posting strategy."</p>
+      </div>
+      <div class="ba-note rv d2">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>The honest difference:</b> where other tools would invent "grew reach 240%", ResumeMuse asks you for the real number instead. Add one and the bullet gets even stronger. Skip it and it stays true. Nothing is ever fabricated.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MATCH / ONE PER ROLE -->
+<section class="sec">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow rv"><span class="d"></span>Tailor in minutes</div>
+      <h2 class="sec-h rv d1">One resume per role, <span class="gtext">without the all-nighter</span></h2>
+      <p class="sec-sub rv d2">Stop sending the same resume everywhere. Generate a tailored version for every application in minutes, and see the match score climb for each one.</p>
+    </div>
+    <div class="match">
+      <div class="match-card rv d1">
+        <span class="match-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4-8 4-8-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+        <div class="match-info"><b>Product Manager</b><span>Northwind Systems</span></div>
+        <span class="match-pct">97% match</span>
+      </div>
+      <div class="match-card rv d2">
+        <span class="match-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4-8 4-8-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+        <div class="match-info"><b>Financial Analyst</b><span>Halcyon Labs</span></div>
+        <span class="match-pct">94% match</span>
+      </div>
+      <div class="match-card rv d3">
+        <span class="match-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4-8 4-8-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+        <div class="match-info"><b>UX Researcher</b><span>Tin Roof Studio</span></div>
+        <span class="match-pct">91% match</span>
+      </div>
+      <div class="match-hint rv d3"><span class="tagx">Interface preview</span> Example roles and companies, shown to illustrate the match view.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="sec">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow rv"><span class="d"></span>What good looks like</div>
+      <h2 class="sec-h rv d1">Built for the moment your resume <span class="gtext">finally matches the job</span></h2>
+      <p class="sec-sub rv d2">Illustrative examples of the kind of outcome ResumeMuse is built to create. Real reviews will replace these as job seekers share theirs.</p>
+    </div>
+    <div class="tst-grid">
+      <div class="tst rv d1">
+        <div class="tst-stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg></div>
+        <p class="tst-q">"I pasted three different job posts and got three tailored resumes in minutes. Seeing the match score climb as I answered made it obvious what each role actually wanted."</p>
+        <div class="tst-who"><span class="tst-av" style="background:linear-gradient(140deg,#7C5CFF,#D65CFF)">SM</span><div><b>Sofia Marchetti</b><span>Product Designer, targeting Brightwave</span></div></div>
+      </div>
+      <div class="tst rv d2">
+        <div class="tst-stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg></div>
+        <p class="tst-q">"The ATS view finally showed me why my resume kept getting filtered. It rewrote my duties into real achievements without ever putting words in my mouth."</p>
+        <div class="tst-who"><span class="tst-av" style="background:linear-gradient(140deg,#4C6FFF,#7C5CFF)">DO</span><div><b>David Okonkwo</b><span>Software Engineer, targeting Northwind</span></div></div>
+      </div>
+      <div class="tst rv d3">
+        <div class="tst-stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg></div>
+        <p class="tst-q">"The bullet rewriter turned a flat job description into something I was proud to send. When it wanted a number I didn't have, it just asked instead of making one up."</p>
+        <div class="tst-who"><span class="tst-av" style="background:linear-gradient(140deg,#D65CFF,#FF5C9E)">AR</span><div><b>Amara Reyes</b><span>Marketing Lead, targeting Aster Studio</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sec" id="faq">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow rv"><span class="d"></span>Questions</div>
+      <h2 class="sec-h rv d1">Good things to know</h2>
+    </div>
+    <div class="faq">
+      <details class="rv"><summary>Is it really free?</summary><div class="fa">Yes. ResumeMuse works on a bring-your-own-key model. You connect your own free API key from Groq once, and it stays in your browser. There is no subscription and no card required to build and export a resume.</div></details>
+      <details class="rv"><summary>Does it invent things to make me look better?</summary><div class="fa">No, and this is the whole point of the product. ResumeMuse never fabricates a number, job title, employer, date or metric. It rewrites what you actually did into stronger language, and if a real figure would make a bullet better, it asks you for it rather than inventing one. That is the version that holds up in an interview.</div></details>
+      <details class="rv"><summary>Will my resume actually pass ATS filters?</summary><div class="fa">ATS compliance is mostly about structure, not decoration. ResumeMuse uses single-column, parsing-safe layouts with standard headings and clean text, and shows you a live match score against the specific job so you can close the gaps before you apply.</div></details>
+      <details class="rv"><summary>What do I need to get started?</summary><div class="fa">A job description and your experience. You can upload an existing resume to use as context, or start from scratch and answer a few focused questions. Either way, the job post comes first, because that is what everything gets tailored against.</div></details>
+      <details class="rv"><summary>Is my data stored anywhere?</summary><div class="fa">No. Your answers and your key stay in your browser, and files you upload are read locally. Nothing is saved on our servers, so closing the tab clears it. You are always in control of your own information.</div></details>
+      <details class="rv"><summary>Does it do more than a resume?</summary><div class="fa">Yes. From the same job post and the answers you have already given, ResumeMuse also drafts a matching cover letter and generates likely interview questions, so the three pieces stay consistent with each other.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="sec final">
+  <div class="wrap">
+    <div class="final-card rv">
+      <h2>Your next resume is <span class="gtext">five minutes away</span></h2>
+      <p>Paste a job description, answer a few questions, and walk away with a resume built around that exact role.</p>
+      <a href="/app.html" class="btn btn-grad btn-lg">Build my resume, free <span class="arw">&rarr;</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="ft-top">
+      <div class="ft-brand">
+        <a href="/" class="logo">
+          <span class="lm"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 6.2L21 10l-5 4 1.4 7L12 17.5 6.6 21 8 14l-5-4 6.6-1.8z" fill="#fff"/></svg></span>
+          <span><b>Resume</b><span class="mu">Muse</span></span>
+        </a>
+        <p>Tailor your resume to any job in minutes. Recruiter-grade writing from your own facts, never invented.</p>
+      </div>
+      <div class="ft-cols">
+        <div class="ft-col">
+          <h4>Product</h4>
+          <a href="/app.html">Build a resume</a>
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div class="ft-col">
+          <h4>More</h4>
+          <a href="https://www.clearpath.click" target="_blank" rel="noopener">Clearpath</a>
+          <a href="#bots">Beat the bots</a>
+        </div>
+      </div>
+    </div>
+    <div class="ft-bot">
+      <span>&copy; <span id="yr"></span> ResumeMuse</span>
+      <span>A Clearpath product</span>
+    </div>
+    <p class="ft-note">ResumeMuse helps you present your genuine experience more effectively. It does not fabricate qualifications, and it is not a guarantee of interviews or offers. Testimonials shown on this page are illustrative examples pending real user reviews. Match scores and company names in previews are for demonstration.</p>
+  </div>
+</footer>
+
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* nav scroll */
+var nav=document.getElementById('nav');
+addEventListener('scroll',function(){ nav.classList.toggle('scrolled', scrollY>20); },{passive:true});
+
+/* close mobile menu on link tap */
+document.querySelectorAll('.drop a').forEach(function(a){ a.addEventListener('click',function(){ document.getElementById('navtog').checked=false; }); });
+
+/* reveal */
+if('IntersectionObserver' in window){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -50px 0px'});
+  document.querySelectorAll('.rv:not(.in)').forEach(function(el){io.observe(el);});
+}else{document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});}
+
+/* fields marquee */
+(function(){
+  var fields=['Product','Engineering','Finance','Marketing','Design','Data','Operations','Sales','Healthcare','Human Resources','Customer Success','Legal','Education','Consulting','Supply Chain'];
+  var t=document.getElementById('mqtrack');
+  var html=fields.map(function(f){return '<span class="mq-item"><span class="dot"></span>'+f+'</span>';}).join('');
+  t.innerHTML=html+html;
+})();
+
+/* hero preview animation: ring counts up, chips + bullets stagger, when in view */
+(function(){
+  var browser=document.getElementById('browser'); if(!browser) return;
+  var played=false;
+  function play(){
+    if(played) return; played=true;
+    var target=96, circ=339.29;
+    var ring=document.getElementById('ring'), num=document.getElementById('ringnum');
+    setTimeout(function(){ ring.style.strokeDashoffset=circ*(1-target/100); },300);
+    var start=null;
+    function count(ts){ if(!start)start=ts; var p=Math.min((ts-start)/1800,1);
+      var eased=1-Math.pow(1-p,3);
+      num.textContent=Math.round(eased*target);
+      if(p<1) requestAnimationFrame(count);
+    }
+    setTimeout(function(){ requestAnimationFrame(count); },300);
+    document.querySelectorAll('#chips .pv-chip').forEach(function(c,i){ setTimeout(function(){c.classList.add('on');},500+i*140); });
+    document.querySelectorAll('#pvbul li').forEach(function(b,i){ setTimeout(function(){b.classList.add('on');},900+i*220); });
+  }
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)play();});},{threshold:.4}).observe(browser);
+  }else{play();}
+})();
+</script>
+</body>
+</html>

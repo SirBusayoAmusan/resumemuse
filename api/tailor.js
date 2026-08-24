@@ -252,17 +252,30 @@ export default async function handler(req, res) {
 }
 
 async function callGroq(key, system, user, maxTokens) {
-  const r = await fetch(GROQ_URL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.3,
-      max_tokens: maxTokens || 1300,
-      response_format: { type: 'json_object' },
-      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-    }),
-  });
+  // Bound the upstream call so the function returns a clean error before Vercel's
+  // hard maxDuration kill, which otherwise surfaces as an unparseable hang.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 24000);
+  let r;
+  try {
+    r = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.3,
+        max_tokens: maxTokens || 1300,
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      }),
+      signal: ctrl.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    if (e && e.name === 'AbortError') throw new Error('groq timeout');
+    throw new Error('groq network ' + (e && e.message ? e.message.slice(0, 120) : ''));
+  }
+  clearTimeout(timer);
   if (!r.ok) {
     if (r.status === 401 || r.status === 403) { const e = new Error('bad_key'); e.code = 'bad_key'; throw e; }
     const t = await r.text().catch(() => '');
