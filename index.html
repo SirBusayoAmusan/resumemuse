@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ResumeMuse - Turn any job description into a resume that gets you hired</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0A0A14">
+
 <meta name="description" content="Paste a job description and ResumeMuse reads the posting, scores your resume against real ATS filters, and rewrites it to match. Recruiter-grade bullets from your own facts, never invented. Free to start.">
 <meta property="og:title" content="ResumeMuse - a resume that gets you hired">
 <meta property="og:description" content="Paste the role you want. ResumeMuse tailors your resume to beat the bots and reach a human. Your words, your data, zero invented facts.">
@@ -34,11 +41,11 @@
   --r-sm:12px;--r-md:18px;--r-lg:26px;--r-xl:34px;--r-full:999px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden;width:100%}
 body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;
-  -webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative;width:100%;max-width:100%;
 }
 h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:1.05;letter-spacing:-.02em}
 a{text-decoration:none;color:inherit}
@@ -68,7 +75,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .center .sec-sub{margin-left:auto;margin-right:auto}
 
 /* aurora background */
-.aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;width:100vw;max-width:100%}
 .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;will-change:transform}
 .blob.b1{width:620px;height:620px;background:radial-gradient(circle,#5B3CFF,transparent 65%);top:-220px;right:-140px;animation:drift1 22s ease-in-out infinite}
 .blob.b2{width:540px;height:540px;background:radial-gradient(circle,#D65CFF,transparent 65%);top:24%;left:-200px;opacity:.32;animation:drift2 26s ease-in-out infinite}
@@ -136,6 +143,7 @@ header.nav.scrolled{background:rgba(7,7,12,.82);backdrop-filter:blur(18px);-webk
 .drop a{display:block;padding:14px 6px;font-size:16px;font-weight:500;color:var(--text-2);border-top:1px solid var(--line)}
 .drop .btn{margin-top:14px}
 @media(max-width:860px){.nav-links{display:none}.nav-r .btn-ghost{display:none}.burger{display:flex}}
+@media(max-width:560px){.nav-r .btn-grad{display:none}}
 
 /* ===== HERO ===== */
 .hero{padding:150px 0 60px;text-align:center;position:relative}

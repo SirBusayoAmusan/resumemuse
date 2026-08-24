@@ -6,6 +6,13 @@
 <meta name="color-scheme" content="light">
 <meta name="description" content="The easiest way to tailor your resume for every job you apply for. Paste a job description, answer a few focused questions, get a resume built around that role.">
 <title>ResumeMuse | Tailor your resume to every job you apply for</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0A0A14">
+
 <style>
 :root{
   --paper:#ffffff;
@@ -520,6 +527,9 @@ footer{border-top:1px solid var(--line);padding:30px 0 44px}
 .paper .r-role-sub{color:#444;font-size:10.5px;margin:1px 0 4px}
 .paper ul.r-bul{margin:3px 0 0;padding-left:15px}
 .paper ul.r-bul li{margin:0 0 2px;color:#222}
+.ph-fill{background:#FEF3C7;color:#92400E;border-radius:4px;padding:0 3px;font-weight:600;
+  box-shadow:inset 0 -1px 0 #F59E0B;cursor:text;white-space:nowrap}
+@media print{.ph-fill{background:transparent;color:inherit;box-shadow:none;font-weight:inherit}}
 .paper .r-empty{color:#b7bbc0;font-style:italic}
 .paper .r-edu-row{display:flex;justify-content:space-between;gap:10px}
 .paper .r-edu-row b{color:#111;font-weight:700}
@@ -1681,6 +1691,9 @@ async function commit(s, input, writing, nextBtn){
           apply:function(v){ if(v) ensureRole(s.roleIndex).dayToDay += ' ' + v; }, cur:function(){return ''}
         }) ]);
       }
+      // Lightweight, JD-driven guidance: on the FIRST pass for a role, surface up to two
+      // targeted questions so people who do not know what a role "should" show get walked through it.
+      if(!s.appendBullets && !s.guided){ guideRole(s); }
     }
     else if(keyProblem(d, null)) return;
     else if(!role.bullets || !role.bullets.length){ role.bullets=[val]; renderResume(); }
@@ -1688,6 +1701,30 @@ async function commit(s, input, writing, nextBtn){
   }
   if(s.after) s.after(s);
   next();
+}
+
+/* Lightweight JD-driven guidance. After a role's first bullets are written, ask the
+   backend for up to two targeted questions the posting cares about, and insert them
+   as optional steps. Answers append to the role and regenerate bullets, so the person
+   is guided toward what this specific job wants, without being interrogated. */
+async function guideRole(s){
+  s.guided=true;
+  var role=ensureRole(s.roleIndex);
+  var d=await api({task:'questions', jd:jdText, role:{title:role.title,company:role.company}, dayToDay:role.dayToDay||''});
+  if(!d || !d.ok || !d.questions || !d.questions.length) return;
+  var qs=d.questions.slice(0,2); // keep it lightweight
+  var steps=qs.map(function(qq,qi){
+    return txtStep({
+      id:s.id+'-guide'+qi, badge:'Tailoring to the job', kind:'long', maxWords:100, optional:true,
+      q:qq.q,
+      hint:(qq.why?qq.why+'. ':'')+(qq.wantsMetric?'A rough number is fine, we never invent one. Skip if you are not sure.':'Skip if it does not apply.'),
+      ph:qq.wantsMetric?'e.g. about 30 to 40%, or roughly 12 accounts...':'e.g. a short, specific detail...',
+      ai:'bullets', roleIndex:s.roleIndex, appendBullets:true, guided:true, followedUp:true,
+      apply:function(v){ if(v) ensureRole(s.roleIndex).dayToDay += ' ' + v; }, cur:function(){return ''}
+    });
+  });
+  // find the current step node to insert after; fall back to appending near the role
+  insertAfter(s, steps);
 }
 
 /* two bullets say the same thing if their meaningful words overlap heavily,
@@ -1830,6 +1867,21 @@ function renderResume(){
     html+='<div class="r-sec"><div class="r-h">Certifications</div><p class="r-skills">'+ed('certifications', R.certifications.join('  \u2022  '), 'Your certifications')+'</p></div>';
   }
   el.innerHTML=html;
+  highlightPlaceholders(el);
+}
+
+/* Wrap [X%], [X] and [$X] placeholders so they stand out and invite a click.
+   These are honest prompts for the candidate's own number, never invented values. */
+function highlightPlaceholders(root){
+  root.querySelectorAll('[data-ed]').forEach(function(node){
+    if(node.querySelector('.ph-fill')) return;
+    var t=node.textContent;
+    if(/\[(X%|X|\$X)\]/.test(t)){
+      node.innerHTML=node.innerHTML.replace(/\[(X%|X|\$X)\]/g, function(m){
+        return '<span class="ph-fill" title="Add your real number">'+m+'</span>';
+      });
+    }
+  });
 }
 
 /* edits write straight back into state */
@@ -1985,6 +2037,25 @@ function resetAll(){
 function cleanResumeClone(){
   var el=$('#resumeDoc'); if(!el) return null;
   var clone=el.cloneNode(true);
+
+  // 0. Any metric placeholder the candidate never filled in ([X%], [X], [$X]) must not
+  //    print. Only strip the trailing outcome clause when the placeholder sits at the very
+  //    end of the bullet (the "...resulting in [X%]." shape). If the placeholder is
+  //    mid-sentence, remove just the token and tidy spacing, so we never delete real content.
+  clone.querySelectorAll('[data-ed]').forEach(function(n){
+    var t=n.textContent;
+    if(!/\[(?:X%|X|\$X)\]/.test(t)) return;
+    // trailing-clause case: connector + short tail ending in the placeholder at end of bullet
+    var trail=/[,;]\s*(?:resulting in|reducing|increasing|improving|cutting|raising|growing|boosting|delivering|saving)\b[^,.;]*\[(?:X%|X|\$X)\][^.]*\.?\s*$/i;
+    var alt=/[,;]\s*[^,.;]*\b(?:by|to)\s+\[(?:X%|X|\$X)\][^.]*\.?\s*$/i;
+    var cleaned;
+    if(trail.test(t)) cleaned=t.replace(trail,'');
+    else if(alt.test(t)) cleaned=t.replace(alt,'');
+    else cleaned=t.replace(/\s*(?:by|to|of)?\s*\[(?:X%|X|\$X)\]\s*/gi,' '); // mid-sentence: drop token + dangling connector
+    cleaned=cleaned.replace(/\s+([.,;])/g,'$1').replace(/\s{2,}/g,' ').replace(/[,;\s]+$/,'').trim();
+    if(cleaned && !/[.]$/.test(cleaned)) cleaned+='.';
+    n.textContent=cleaned;
+  });
 
   // 1. Editable spans: unwrap filled ones to their plain text, delete empty ones.
   //    This is what kills the "Your Name / Describe what you did" placeholder text,
