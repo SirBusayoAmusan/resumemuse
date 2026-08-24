@@ -4,6 +4,9 @@
 // tasks:
 //   'extract' { jd }                                  -> resume scaffold from the posting
 //   'bullets' { jd, role:{title,company}, dayToDay }  -> honest tailored bullets for one role
+//   'rewrite' { jd, role, bullets }                   -> existing bullets retargeted to the posting
+//   'refine'  { jd, kind, text|bullets, role }        -> recruiter-grade upgrade of one section
+//   'parse'   { resumeText }                          -> uploaded resume text -> structured JSON
 //   'summary' { jd, profile }                         -> refined professional summary
 //
 // The key is read from the request, used for this one call, and never stored or
@@ -15,7 +18,16 @@ import { rateLimit } from '../lib/ratelimit.js';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
-const HONESTY = `Never invent, assume or embellish. Do not add numbers, percentages, metrics, employer names, job titles, dates, tools or achievements that are not explicitly given. If something is unknown, leave it out. No first person ("I", "my"). This is a strict rule.`;
+// The single most important rule in the product. Strengthened with the evidence
+// discipline of a senior recruiter: reposition genuine experience, never manufacture it.
+const HONESTY = `NON-NEGOTIABLE TRUTH RULES:
+- Never invent, assume or embellish. Do not add numbers, percentages, metrics, money figures, employer names, job titles, dates, degrees, certifications, tools, team sizes, deal values, awards or achievements that are not explicitly present in the candidate's own words or supplied data.
+- Never convert an assumption into a fact. "Worked with HR teams" does NOT become "led HR partnerships across 50 companies". If evidence for a stronger claim is missing, keep the honest weaker version.
+- Never upgrade a job title. "Executive" does not become "Director". "Assisted" does not become "led" or "owned" unless the candidate's words clearly show ownership.
+- If the candidate stated an approximate number ("about 400", "around 30 to 40"), keep the word "approximately" and preserve the range. Never turn "about 400" into "400". Never manufacture false precision.
+- Qualitative achievements are fully acceptable when no metric exists. Scale ("across 90 companies") is strong on its own; do not attach a fake percentage to it.
+- No first person ("I", "my", "we"). Neutral resume voice.
+This rule overrides every other instruction. When in doubt, write the weaker true statement, never the stronger false one.`;
 
 const GLOBAL_STYLE = `WRITING STANDARD (applies to every word you output):
 - Neutral international English. No regional slang, idioms, colloquialisms or culture-specific references. Spell out anything that would confuse a reader in another country.
@@ -24,8 +36,16 @@ const GLOBAL_STYLE = `WRITING STANDARD (applies to every word you output):
 - Never output a photo reference, date of birth, age, gender, marital status, religion or nationality. These disqualify a resume in many markets.
 - Plain characters only. No em dashes, no fancy quotes, no emoji, no decorative symbols.`;
 
+// Shared craft standard, distilled from senior-recruiter / executive-resume practice.
+const BULLET_CRAFT = `BULLET CRAFT:
+- Each bullet ideally follows: strong past-tense action verb + what was done + how or context + measurable or concrete result (only if the candidate supplied one).
+- Prefer achievements over duties. "Responsible for reconciliations" is weak; "Reconciled monthly accounts across multiple ledgers, resolving discrepancies before close" is strong, and uses only stated facts.
+- Vary the opening verb. Do not begin several bullets with the same word. Draw from: Led, Built, Scaled, Managed, Developed, Designed, Delivered, Streamlined, Reconciled, Prepared, Coordinated, Implemented, Reduced, Improved, Owned, Negotiated, Analyzed, Automated. Use only verbs that match the real level of ownership.
+- Roughly 15 to 30 words per bullet. Every bullet must earn its place; no filler, no repeated ideas.
+- Use the posting's own terminology where it truthfully matches what the candidate did. This is how the resume passes ATS keyword matching without stuffing.`;
+
 const PROMPTS = {
-  extract: `You read a job posting and produce the scaffold of a resume tailored to it.
+  extract: `You are a senior recruiter and ATS strategist. You read a job posting and produce the scaffold of a resume tailored to it, thinking about what this specific employer needs a candidate to prove.
 ${HONESTY}
 ${GLOBAL_STYLE}
 The candidate has not described themselves yet, so the summary must describe the kind of professional this role calls for, in neutral resume voice, WITHOUT claiming specific experience, numbers or employers. It is an editable draft.
@@ -39,14 +59,13 @@ Return ONLY JSON:
   "gaps": array of up to 4 short prompts naming what still needs to come from the candidate
 }`,
 
-  bullets: `You turn a candidate's plain description of one job into tailored resume bullets, written in the language of the target posting.
+  bullets: `You are a senior recruiter and executive resume writer. You turn a candidate's plain description of one job into tailored resume bullets, written in the language of the target posting, that make their genuine experience impossible to miss.
 ${HONESTY}
 ${GLOBAL_STYLE}
-Rules for bullets:
-- Produce 4 to 5 bullets. This is a hard requirement, matching professional resume standards.
-- Reach that count ONLY by separating the distinct things the candidate actually described into their own bullets, and by expressing each with the terminology the posting uses. Never reach it by inventing new duties, tools, scope or results.
+${BULLET_CRAFT}
+Rules for count:
+- Produce 4 to 5 bullets. Reach that count ONLY by separating the distinct things the candidate actually described into their own bullets, and by expressing each in the posting's terminology. Never reach it by inventing new duties, tools, scope or results.
 - If the candidate genuinely described fewer than 4 distinct activities, return only the bullets their words support and set "needsMore" to true. Do not pad.
-- Each bullet: one line, starts with a strong past-tense action verb, no first person, no invented numbers.
 Return ONLY JSON:
 {
   "bullets": array of bullets built only from the candidate's words,
@@ -55,15 +74,36 @@ Return ONLY JSON:
   "missingMetric": boolean, true if a bullet would clearly benefit from a number the candidate did not provide
 }`,
 
-  rewrite: `You retarget a candidate's EXISTING resume bullets for a specific job posting.
+  rewrite: `You are a senior recruiter. You retarget a candidate's EXISTING resume bullets for a specific job posting.
 ${HONESTY}
 ${GLOBAL_STYLE}
+${BULLET_CRAFT}
 Rules:
-- Every fact must already exist in the original bullets. Keep every number, tool, employer and scope exactly as written. You are re-expressing, not re-inventing.
+- Every fact must already exist in the original bullets. Keep every number, tool, employer and scope exactly as written. You are re-expressing and re-ordering, not re-inventing.
 - Re-order and re-word so the responsibilities the posting cares about come first and use the posting's terminology where it honestly matches the original meaning.
 - Produce 4 to 5 bullets where the original material supports it. If the original had fewer facts, return fewer. Never invent a bullet to hit the count.
-- Each bullet: one line, strong past-tense verb, no first person.
 Return ONLY JSON: { "bullets": array of retargeted bullets }`,
+
+  // NEW: the heavier "Refine with AI" pass. One section at a time, recruiter-grade,
+  // still strictly non-fabricating. Handles summary, a skills line, or a role's bullets.
+  refine: `You are an elite ATS resume strategist, executive recruiter and resume writer. You are handed ONE section of a resume that a candidate has already drafted, plus the target job posting. Your job is to raise that one section to the strongest, most relevant, most credible version that the candidate's OWN facts can honestly support for THIS posting.
+${HONESTY}
+${GLOBAL_STYLE}
+${BULLET_CRAFT}
+How to refine each kind:
+- "summary": rewrite into 3 to 5 sentences, roughly 60 to 100 words. Lead with professional identity and the level the facts support, fold in the functional expertise and any real, stated outcomes, and make relevance to the posting obvious. Avoid empty phrases like "results-driven", "passionate", "hardworking team player" unless a concrete fact backs them. Do not state years of experience, employers or metrics that were not provided.
+- "bullets": take the given bullets for one role and produce the sharpest 4 to 5 (or fewer if the facts do not support 4) using the bullet craft above. Reposition around what the posting values. Keep every stated fact and number exactly; add none.
+- "skills": take the given comma or bullet separated skills, keep only those the candidate genuinely has, order them by relevance to the posting, and use the posting's exact terminology where it truthfully matches. Do not add a skill or tool just because the posting names it.
+If a stronger version would clearly benefit from a specific number or detail the candidate has not given, do not invent it. Instead surface that as "followUp".
+Return ONLY JSON:
+{
+  "kind": echo back the kind you were given ("summary" | "bullets" | "skills"),
+  "summary": refined summary string (only when kind is "summary", else ""),
+  "bullets": array of refined bullets (only when kind is "bullets", else []),
+  "skills": array of refined skills (only when kind is "skills", else []),
+  "followUp": one short question that would let you strengthen this further with a real fact, or "" if none,
+  "note": one short, plain sentence telling the candidate what you improved, or "" if nothing changed
+}`,
 
   parse: `You extract structured data from the raw text of a resume that a candidate uploaded.
 ${HONESTY}
@@ -80,10 +120,10 @@ Return ONLY JSON:
   "certifications": array of certification names
 }`,
 
-  summary: `You write the professional summary for a candidate's resume, tailored to a target posting.
+  summary: `You are a senior recruiter writing the professional summary for a candidate's resume, tailored to a target posting.
 ${HONESTY}
 ${GLOBAL_STYLE}
-Use ONLY facts present in the provided profile (name, target title, roles, bullets, skills). 3 to 4 sentences, neutral resume voice, no first person, no invented specifics.
+Use ONLY facts present in the provided profile (name, target title, roles, bullets, skills). 3 to 5 sentences, roughly 60 to 100 words, neutral resume voice, no first person, no invented specifics. Lead with professional identity and make relevance to the posting obvious. Avoid empty phrases like "results-driven" or "passionate" unless a concrete fact backs them.
 Return ONLY JSON: { "summary": "..." }`,
 };
 
@@ -135,13 +175,30 @@ export default async function handler(req, res) {
   } else if (task === 'rewrite') {
     const jd = clampWords(body.jd, 1000);
     const role = body.role || {};
-    const existing = Array.isArray(body.bullets)
-      ? body.bullets.filter((b) => typeof b === 'string' && b.trim()).map((b) => b.trim().slice(0, 400)).slice(0, 12)
-      : [];
+    const existing = bulletList(body.bullets);
     if (!existing.length) return res.status(422).json({ ok: false, message: 'No bullets to retarget.' });
     userMsg = `TARGET POSTING:\n${jd}\n\nROLE: ${str(role.title, 120)}${role.company ? ' at ' + str(role.company, 120) : ''}\n\nEXISTING BULLETS:\n${existing.map((b) => '- ' + b).join('\n')}`;
+  } else if (task === 'refine') {
+    const jd = clampWords(body.jd, 1000);
+    const kind = ['summary', 'bullets', 'skills'].includes(body.kind) ? body.kind : '';
+    if (!kind) return res.status(400).json({ ok: false, message: 'Unknown refine kind.' });
+    const role = body.role || {};
+    let payloadBlock = '';
+    if (kind === 'summary') {
+      const t = clampWords(body.text, 200);
+      if (!t || words(t).length < 3) return res.status(422).json({ ok: false, message: 'Write a little in the summary first, then refine it.' });
+      payloadBlock = `SECTION TO REFINE (kind: summary):\n${t}`;
+    } else if (kind === 'skills') {
+      const t = clampWords(body.text, 200);
+      if (!t || words(t).length < 2) return res.status(422).json({ ok: false, message: 'Add a few skills first, then refine them.' });
+      payloadBlock = `SECTION TO REFINE (kind: skills, comma or bullet separated):\n${t}`;
+    } else {
+      const existing = bulletList(body.bullets);
+      if (!existing.length) return res.status(422).json({ ok: false, message: 'Add a bullet or two first, then refine.' });
+      payloadBlock = `SECTION TO REFINE (kind: bullets)\nROLE: ${str(role.title, 120)}${role.company ? ' at ' + str(role.company, 120) : ''}\nBULLETS:\n${existing.map((b) => '- ' + b).join('\n')}`;
+    }
+    userMsg = `TARGET POSTING:\n${jd}\n\n${payloadBlock}`;
   } else if (task === 'parse') {
-    // Resume text can be long; allow more room than a posting.
     const raw = clampWords(body.resumeText, 2500);
     if (!raw || words(raw).length < 20) {
       return res.status(422).json({ ok: false, message: 'We could not read enough text from that file. Try another format or paste the text.' });
@@ -154,7 +211,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const parsed = await callGroq(key, PROMPTS[task], userMsg, task === 'parse' ? 4000 : 1300);
+    const maxTok = task === 'parse' ? 4000 : (task === 'refine' ? 1600 : 1300);
+    const parsed = await callGroq(key, PROMPTS[task], userMsg, maxTok);
     return res.status(200).json({ ok: true, task, ...shape(task, parsed) });
   } catch (err) {
     if (err && err.code === 'bad_key') {
@@ -211,6 +269,17 @@ function shape(task, x) {
   if (task === 'rewrite') {
     return { bullets: arr(x.bullets, 6) };
   }
+  if (task === 'refine') {
+    const kind = ['summary', 'bullets', 'skills'].includes(x.kind) ? x.kind : '';
+    return {
+      kind,
+      summary: str(x.summary, 900),
+      bullets: arr(x.bullets, 6),
+      skills: arr(x.skills, 16),
+      followUp: str(x.followUp, 200),
+      note: str(x.note, 200),
+    };
+  }
   if (task === 'parse') {
     const c = x.contact || {};
     return {
@@ -241,6 +310,11 @@ function shape(task, x) {
   return {};
 }
 
+function bulletList(x) {
+  return Array.isArray(x)
+    ? x.filter((b) => typeof b === 'string' && b.trim()).map((b) => b.trim().slice(0, 400)).slice(0, 12)
+    : [];
+}
 function arr(x, n) {
   return Array.isArray(x)
     ? x.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim().slice(0, 220)).slice(0, n)
