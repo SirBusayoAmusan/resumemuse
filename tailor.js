@@ -247,6 +247,16 @@ export default async function handler(req, res) {
     if (err && err.code === 'bad_key') {
       return res.status(401).json({ ok: false, badKey: true, message: 'Groq did not accept that key. Open the key panel and paste it again.' });
     }
+    if (err && err.code === 'key_limited') {
+      return res.status(429).json({
+        ok: false,
+        keyLimited: true,
+        spent: !!err.spent,
+        message: err.spent
+          ? 'Your Groq key has used up its free allowance. Check your usage at console.groq.com, or connect a different key.'
+          : 'Your Groq key hit its rate limit. Wait a moment and try again, or connect a different key.',
+      });
+    }
     return res.status(200).json({ ok: false, soft: true, message: 'The writer is unavailable right now. Try again in a moment.' });
   }
 }
@@ -278,6 +288,13 @@ async function callGroq(key, system, user, maxTokens) {
   clearTimeout(timer);
   if (!r.ok) {
     if (r.status === 401 || r.status === 403) { const e = new Error('bad_key'); e.code = 'bad_key'; throw e; }
+    if (r.status === 429) {
+      const t = await r.text().catch(() => '');
+      const e = new Error('groq quota');
+      e.code = 'key_limited';
+      e.spent = /quota|credit|billing|insufficient/i.test(t);
+      throw e;
+    }
     const t = await r.text().catch(() => '');
     throw new Error('groq ' + r.status + ' ' + t.slice(0, 200));
   }
